@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Land Partition Calculator – Bigha Kata Lessa</title>
+<!--
+  SEARCH ANCHORS (Ctrl+F these names to jump to the exact place):
+  @ANCHOR:CSS-THEME        colors and tokens
+  @ANCHOR:CSS-LAYOUT       cards, inputs, result styles
+  @ANCHOR:HTML-HEADER      title + developer name
+  @ANCHOR:HTML-INPUTS      bigha / kata / lessa / people inputs
+  @ANCHOR:HTML-RESULT      result area
+  @ANCHOR:HTML-RULES       rule guide section
+  @ANCHOR:HTML-FOOTER      developer credit + WhatsApp link
+  @ANCHOR:JS-CONSTANTS     unit conversion rules
+  @ANCHOR:JS-CALC          core split math
+  @ANCHOR:JS-RENDER        result rendering
+  @ANCHOR:JS-EVENTS        buttons and input listeners
+-->
+<style>
+/* @ANCHOR:CSS-THEME */
+:root{
+  --bg:#f3efe4; --card:#fffdf7; --ink:#1f2a1c; --muted:#6a7262;
+  --line:#d9d2bd; --accent:#2f6b3a; --accent-ink:#ffffff; --soft:#e6efd9; --warn:#b3392b;
+  --wa:#1fa855;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141a12; --card:#1d261a; --ink:#eef2e6; --muted:#9aa591;
+    --line:#33402f; --accent:#7fcf8b; --accent-ink:#10200f; --soft:#26351f; --warn:#ff8a78;
+  }
+}
+/* @ANCHOR:CSS-LAYOUT */
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.45}
+body{padding:max(16px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
+.wrap{max-width:560px;margin:0 auto}
+header{padding:8px 2px 14px}
+h1{font-size:1.55rem;margin:0 0 2px;letter-spacing:-.01em}
+.by{color:var(--muted);font-size:.9rem;margin:0}
+.by b{color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+h2{font-size:1.05rem;margin:0 0 12px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:4px}
+input[type=number]{width:100%;font-size:1.15rem;padding:10px 8px;border:1px solid var(--line);
+  border-radius:10px;background:var(--bg);color:var(--ink);outline:none}
+input[type=number]:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--soft)}
+.people{display:flex;align-items:center;gap:10px;margin-top:14px}
+.people label{margin:0;flex:1;font-size:.95rem;color:var(--ink)}
+.step{display:flex;align-items:center;gap:6px}
+.step button{width:42px;height:42px;font-size:1.3rem;border-radius:10px;border:1px solid var(--line);
+  background:var(--bg);color:var(--ink);cursor:pointer}
+.step input{width:64px;text-align:center}
+.actions{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;padding:12px;border-radius:10px;border:1px solid var(--accent);font-size:1rem;
+  cursor:pointer;background:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:focus-visible,.step button:focus-visible,a:focus-visible{outline:3px solid var(--soft);outline-offset:2px}
+.err{color:var(--warn);font-size:.9rem;margin-top:10px;min-height:1.2em}
+.total{font-size:.92rem;color:var(--muted);margin:0 0 10px}
+.share{background:var(--soft);border-radius:12px;padding:14px;text-align:center;margin-bottom:10px}
+.share .lbl{font-size:.85rem;color:var(--muted);margin-bottom:6px}
+.share .val{font-size:1.5rem;font-weight:700;color:var(--accent);letter-spacing:-.01em}
+.share .val span{font-size:.85rem;font-weight:500;color:var(--muted);margin:0 8px 0 3px}
+.persons{display:grid;gap:6px;font-size:.92rem;margin-top:8px}
+.persons div{display:flex;justify-content:space-between;border-bottom:1px dashed var(--line);padding:5px 0}
+.hidden{display:none}
+table{width:100%;border-collapse:collapse;font-size:.95rem;margin:6px 0 10px}
+td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--muted);font-weight:600;font-size:.85rem}
+.guide p{margin:6px 0;font-size:.93rem}
+.guide ul{margin:6px 0 0;padding-left:20px;font-size:.93rem}
+footer{text-align:center;color:var(--muted);font-size:.88rem;padding-top:6px}
+footer .wa{display:inline-block;margin-top:8px;padding:10px 16px;border-radius:999px;background:var(--wa);
+  color:#fff;text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- @ANCHOR:HTML-HEADER -->
+<header>
+  <h1>Land Partition Calculator</h1>
+  <p class="by">Develop by <b>Raj</b></p>
+</header>
+
+<!-- @ANCHOR:HTML-INPUTS -->
+<section class="card" aria-label="Enter land area">
+  <h2>Total land</h2>
+  <div class="grid">
+    <div><label for="bigha">Bigha</label><input id="bigha" type="number" inputmode="decimal" min="0" step="any" placeholder="0"></div>
+    <div><label for="kata">Kata</label><input id="kata" type="number" inputmode="decimal" min="0" step="any" placeholder="0"></div>
+    <div><label for="lessa">Lessa</label><input id="lessa" type="number" inputmode="decimal" min="0" step="any" placeholder="0"></div>
+  </div>
+  <div class="people">
+    <label for="people">Divide among (people)</label>
+    <div class="step">
+      <button type="button" id="minus" aria-label="Fewer people">−</button>
+      <input id="people" type="number" inputmode="numeric" min="1" max="100" step="1" value="3">
+      <button type="button" id="plus" aria-label="More people">+</button>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn" id="calc" type="button">Calculate</button>
+    <button class="btn ghost" id="reset" type="button">Reset</button>
+  </div>
+  <div class="err" id="err" role="alert"></div>
+</section>
+
+<!-- @ANCHOR:HTML-RESULT -->
+<section class="card hidden" id="resultCard" aria-live="polite">
+  <h2>Each person gets</h2>
+  <p class="total" id="totalLine"></p>
+  <div class="share">
+    <div class="lbl" id="shareLbl"></div>
+    <div class="val" id="shareVal"></div>
+  </div>
+  <div class="persons" id="persons"></div>
+  <div class="actions"><button class="btn ghost" id="copy" type="button">Copy result</button></div>
+</section>
+
+<!-- @ANCHOR:HTML-RULES -->
+<section class="card guide" aria-label="Rule guide">
+  <h2>Rule guide</h2>
+  <table>
+    <tr><th>Unit</th><th>Equals</th></tr>
+    <tr><td>1 Bigha</td><td>5 Kata</td></tr>
+    <tr><td>1 Kata</td><td>20 Lessa</td></tr>
+    <tr><td>1 Bigha</td><td>100 Lessa</td></tr>
+  </table>
+  <p><b>How to use</b></p>
+  <ul>
+    <li>Type the land in bigha, kata, lessa. You can fill one box or all three.</li>
+    <li>Set how many people will share the land.</li>
+    <li>Tap Calculate to see one person's share in bigha, kata and lessa.</li>
+  </ul>
+  <p style="margin-top:10px"><b>Example</b></p>
+  <p>3 bigha divided among 4 people: 3 bigha = 300 lessa, 300 ÷ 4 = 75 lessa each = 0 bigha, 3 kata, 15 lessa.</p>
+  <p>If the land does not divide evenly, the share shows lessa with decimals (for example 16.67 lessa).</p>
+</section>
+
+<!-- @ANCHOR:HTML-FOOTER -->
+<footer>
+  <div>Develop by <b>Raj</b></div>
+  <a class="wa" href="https://wa.me/918399964358" target="_blank" rel="noopener">Contact developer on WhatsApp</a>
+</footer>
+
+</div>
+
+<script>
+/* @ANCHOR:JS-CONSTANTS */
+var LESSA_PER_KATA = 20;
+var KATA_PER_BIGHA = 5;
+var LESSA_PER_BIGHA = 100; // 5 kata x 20 lessa
+var PRECISION = 100;       // keep 2 decimals of lessa
+
+function $(id){ return document.getElementById(id); }
+
+/* @ANCHOR:JS-CALC */
+// Convert bigha/kata/lessa to hundredths of a lessa (whole integer, no float drift)
+function toUnits(b, k, l){
+  return Math.round((b * LESSA_PER_BIGHA + k * LESSA_PER_KATA + l) * PRECISION);
+}
+// Convert hundredths of a lessa back to {bigha, kata, lessa}
+function fromUnits(u){
+  var bigUnits = LESSA_PER_BIGHA * PRECISION;
+  var kataUnits = LESSA_PER_KATA * PRECISION;
+  var bigha = Math.floor(u / bigUnits); u -= bigha * bigUnits;
+  var kata = Math.floor(u / kataUnits); u -= kata * kataUnits;
+  return { bigha: bigha, kata: kata, lessa: u / PRECISION };
+}
+function splitLand(b, k, l, n){
+  var total = toUnits(b, k, l);
+  var each = Math.round(total / n);
+  return { total: total, each: each, parts: fromUnits(each), totalParts: fromUnits(total) };
+}
+
+/* @ANCHOR:JS-RENDER */
+function fmtLessa(x){ return (Math.round(x * 100) / 100).toString(); }
+function fmtParts(p){
+  return p.bigha + " bigha, " + p.kata + " kata, " + fmtLessa(p.lessa) + " lessa";
+}
+var lastText = "";
+function render(r, n){
+  $("totalLine").textContent = "Total: " + fmtParts(r.totalParts) + " (" + fmtLessa(r.total / PRECISION) + " lessa) ÷ " + n + " people";
+  $("shareLbl").textContent = "One person's share";
+  var p = r.parts;
+  $("shareVal").innerHTML = p.bigha + "<span>bigha</span>" + p.kata + "<span>kata</span>" + fmtLessa(p.lessa) + "<span>lessa</span>";
+  var box = $("persons"); box.innerHTML = "";
+  var show = Math.min(n, 12);
+  for (var i = 1; i <= show; i++){
+    var d = document.createElement("div");
+    d.innerHTML = "<span>Person " + i + "</span><span>" + fmtParts(p) + "</span>";
+    box.appendChild(d);
+  }
+  if (n > show){
+    var m = document.createElement("div");
+    m.innerHTML = "<span>… and " + (n - show) + " more, same share</span><span></span>";
+    box.appendChild(m);
+  }
+  lastText = "Land partition\nTotal: " + fmtParts(r.totalParts) + "\nPeople: " + n +
+             "\nEach person: " + fmtParts(p) + "\n(1 bigha = 5 kata, 1 kata = 20 lessa)\nDevelop by Raj";
+  $("resultCard").classList.remove("hidden");
+}
+
+/* @ANCHOR:JS-EVENTS */
+function num(id){ var v = parseFloat($(id).value); return isNaN(v) ? 0 : v; }
+function calculate(){
+  var b = num("bigha"), k = num("kata"), l = num("lessa"), n = parseInt($("people").value, 10);
+  var err = $("err"); err.textContent = "";
+  if (b < 0 || k < 0 || l < 0){ err.textContent = "Values cannot be negative."; return; }
+  if (b + k + l === 0){ err.textContent = "Enter land in bigha, kata or lessa."; $("resultCard").classList.add("hidden"); return; }
+  if (!n || n < 1){ err.textContent = "People must be at least 1."; return; }
+  if (n > 100){ err.textContent = "Maximum 100 people."; return; }
+  render(splitLand(b, k, l, n), n);
+}
+$("calc").addEventListener("click", calculate);
+$("reset").addEventListener("click", function(){
+  ["bigha","kata","lessa"].forEach(function(id){ $(id).value = ""; });
+  $("people").value = 3; $("err").textContent = ""; $("resultCard").classList.add("hidden");
+});
+$("minus").addEventListener("click", function(){ var n = parseInt($("people").value,10) || 1; $("people").value = Math.max(1, n - 1); });
+$("plus").addEventListener("click", function(){ var n = parseInt($("people").value,10) || 1; $("people").value = Math.min(100, n + 1); });
+["bigha","kata","lessa","people"].forEach(function(id){
+  $(id).addEventListener("keydown", function(e){ if (e.key === "Enter") calculate(); });
+});
+$("copy").addEventListener("click", function(){
+  var btn = $("copy");
+  function done(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy result"; }, 1500); }
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(lastText).then(done); return; }
+  } catch (e) {}
+  var t = document.createElement("textarea"); t.value = lastText; document.body.appendChild(t); t.select();
+  try { document.execCommand("copy"); done(); } catch (e) {}
+  document.body.removeChild(t);
+});
+</script>
+</body>
+</html>
